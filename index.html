@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Editar Feture</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+	<style>
+		.container-top{max-width: 500px;}
+		.bk {
+			position: relative;
+			padding: 2rem;
+			margin: 5px;
+			border: solid #f8f9fa;
+			border-radius: 10px;
+	 	}
+	</style>
+</head>
+<body>
+<div class="container container-top">
+	<div >
+		<h2>Editor de Feature</h2>
+		<p>Indica el mapa y el objeto. Si el mapa no es publico, indica tambien el token.</p>
+	</div>
+	<div class="bk">
+		<div class="form-group row">
+			<label for="FilterMap" class="col-sm-3">Map Id</label>
+			<div class="col-sm-9">
+				<input type="text" class="form-control" id="filterMap" value="" placeholder="The XXX in https://services7.arcgis.com/XXXX/arcgis">
+			</div>
+		</div>
+		<div class="form-group row">
+			<label for="FilterObjetId" class="col-sm-3">Object Id</label>
+			<div class="col-sm-9">
+			<input type="text" class="form-control" id="filterObjetId">
+			</div>
+		</div>
+
+		<div class="alert alert-warning" style="display: none;" id="alertEdit">
+			Map Id y Object Id son obligatorios.
+		</div>
+		<button type="button" id="btnEdit" class="btn btn-primary btn-lg btn-block">Editar</button>
+	</div>
+	<div>
+		<p>Formulario</p>
+	</div>
+	<div class="bk">
+		<div id="form">
+
+		</div>
+
+		<div class="alert alert-warning" style="display: none;" id="alertSaveEmpty">
+			No se han detectado cambios.
+		</div>
+		<div class="alert alert-warning" style="display: none;" id="alertSaveError">
+			Se ha producido un error al guardar.
+		</div>
+		<div class="alert alert-success" style="display: none;" id="alertSaveOk">
+			Datos guardados.
+		</div>
+		<button type="button" id="btnSave" class="btn btn-primary btn-lg btn-block">Guardar</button>
+	</div>
+</div>
+
+
+<script>
+	String.format = function() {var s = arguments[0];for (var i = 0; i < arguments.length - 1; i++) {var reg = new RegExp("\\{" + i + "\\}", "gm");s = s.replace(reg, arguments[i + 1]);}return s;}
+
+	var conf = {
+		url: 'https://services7.arcgis.com/{0}/arcgis/rest/services/Test_Feature_Layer/FeatureServer/0/'
+	};
+	var filter = {};
+	var currentData= null;
+	var currentForm={};
+	function FeatureLoad(){
+		filter.mapId = $("#filterMap").val();
+		filter.objectId = $("#filterObjetId").val();
+		if(filter.mapId!= '' && filter.objectId != '') {
+			var url = String.format(conf.url+'query?f=json&returnGeometry=false&outFields=*&where=((objectid = {1}))', filter.mapId, filter.objectId);
+
+			$.get(url, function (data) {
+				FeatureFormat(JSON.parse(data));
+			});
+		}
+		else{
+			AlertShow('#alertEdit');
+		}
+	}
+	function FeatureFormat(data) {
+		currentData = data;
+		currentForm = {};
+		var form = $('#form');
+		form.empty();
+		for(var f = 0, fl=data.fields.length; f < fl;f++){
+			currentForm[data.fields[f].name] = {
+				value_init: data.features[0].attributes[data.fields[f].name],
+				value: data.features[0].attributes[data.fields[f].name],
+				type :data.fields[f].type
+			};
+			switch (data.fields[f].name) {
+				case 'objectid':
+				case 'globalid':
+					break;
+				case 'CreationDate':
+				case 'Creator':
+				case 'EditDate':
+				case 'Editor':
+					break;
+				default:
+					switch (data.fields[f].type) {
+						case 'esriFieldTypeString':
+							if(data.fields[f].domain){
+								form.append(FeatureFormatList(data.fields[f],data.features[0].attributes[data.fields[f].name]));
+							}else{
+								form.append(FeatureFormatText(data.fields[f],data.features[0].attributes[data.fields[f].name]));
+							}
+							break;
+						case 'esriFieldTypeInteger':
+							form.append(FeatureFormatInteger(data.fields[f],data.features[0].attributes[data.fields[f].name]));
+							break;
+					}
+					break;
+			}
+
+		}
+	}
+	function FeatureFormatText(data,value) {
+		var input = $('<input type="text" class="form-control" id="'+data.name+'" value="" >').val(value);
+		input.change(function () {
+			currentForm[this.id].value = $(this).val();
+		});
+		return $('<div class="form-group row"><label for="FilterMap" class="col-sm-3">'+data.alias+'</label></div>')
+				.append($('<div class="col-sm-9"></div>').append(input));
+	}
+	function FeatureFormatInteger(data,value) {
+		var input = $('<input type="number" class="form-control" id="'+data.name+'" value="" >').val(value);
+		input.change(function () {
+			currentForm[this.id].value = $(this).val();
+		});
+		return $('<div class="form-group row"><label for="FilterMap" class="col-sm-3">'+data.alias+'</label></div>')
+				.append($('<div class="col-sm-9"></div>').append(input));
+	}
+	function FeatureFormatList(data,value) {
+		var select = $('<select class="form-control" id="'+data.name+'" >');
+		for(var x = 0; x < data.domain.codedValues.length; x ++){
+			select.append('<option value="'+data.domain.codedValues[x].code+'">'+data.domain.codedValues[x].name+'</option>');
+		}
+		select.val(value);
+		select.change(function () {
+			currentForm[this.id].value = $(this).val();
+		});
+		return $('<div class="form-group row"><label for="FilterMap" class="col-sm-3">'+data.alias+'</label></div>')
+				.append($('<div class="col-sm-9"></div>').append(select));
+
+	}
+
+	function FeatureSave(){
+		var hasChanges = false;
+		var dataToUpdate = {};
+		for(var f in currentForm){
+			if(currentForm[f].value_init != currentForm[f].value){
+				hasChanges = true;
+				dataToUpdate[f] = currentForm[f].value;
+			}
+		}
+		if(hasChanges) {
+			dataToUpdate.objectid = filter.objectId;
+			var url = String.format(conf.url+'applyEdits', filter.mapId)+"?f=json&updates=" + encodeURIComponent( JSON.stringify([{"attributes": dataToUpdate}]));
+			$.post(url,{}, function (data) {
+				data = JSON.parse(data);
+				if(data.error){
+					AlertShow('#alertSaveError');
+				}else{
+					AlertShow('#alertSaveOk');
+				}
+			});
+		}else{
+			AlertShow('#alertSaveEmpty');
+		}
+
+	}
+	function Start() {
+		$("#btnEdit").click(FeatureLoad);
+		$("#btnSave").click(FeatureSave);
+	}
+	function AlertShow(id) {
+		$(id).show();setTimeout(function () {$(id).hide();},3000);
+	}
+	Start();
+</script>
+
+<footer>
+		<div class="panel-body text-center">
+		</div>
+</footer>
+</html>
