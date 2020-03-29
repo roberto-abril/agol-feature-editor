@@ -67,7 +67,7 @@
 		urlBase: 'https://{0}.arcgis.com/{1}/arcgis/rest/services/{2}/FeatureServer/{3}/',
 		url:'',
 		subdomain:'services7',
-		instance:'0',
+		instance:'lTrEzFGSU2ayogtj',
 		serviceName:'Test_Feature_Layer',
 		layerId:'0',
 		clienteId:'IxHuZnJXVrOYXgQT'
@@ -91,6 +91,10 @@
 		}
 	}
 	function FeatureFormat(data) {
+		if(data.error){
+			AlertShow('#alertEdit');
+			return;
+		}
 		currentData = data;
 		currentForm = {};
 		var form = $('#form');
@@ -219,6 +223,8 @@
 			conf.layerId = qs.layerId;
 		if(qs.clienteId)
 			conf.clienteId = qs.clienteId;
+		else
+			conf.clienteId = '';
 		conf.url = String.format(conf.urlBase,conf.subdomain,conf.instance,conf.serviceName,conf.layerId);
 		// https://{{subdomain}}.arcgis.com/{{instance}}/arcgis/rest/services/{{serviceName}}/FeatureServer/{{layerId}}
 	}
@@ -228,38 +234,45 @@
 
 	Start();
 
+	if(conf.clienteId != '') {
+		require([
+			'esri/map', "esri/dijit/BasemapGallery", "esri/dijit/BasemapLayer", "esri/symbols/PictureMarkerSymbol",
+			'esri/layers/FeatureLayer', 'esri/urlUtils', 'esri/tasks/query', 'esri/arcgis/Portal', 'esri/arcgis/OAuthInfo',
+			'esri/IdentityManager', "esri/arcgis/utils", "dijit/layout/BorderContainer", "dijit/layout/ContentPane",
+			"dijit/TitlePane", 'dojo/Deferred', 'dojo/domReady!'
+		], function (Map, BasemapGallery, BasemapLayer, PictureMarkerSymbol, FeatureLayer, urlUtils, Query, arcgisPortal, OAuthInfo, esriId, $, Deferred) {
 
-	require([
-		'esri/map',"esri/dijit/BasemapGallery","esri/dijit/BasemapLayer","esri/symbols/PictureMarkerSymbol",
-		'esri/layers/FeatureLayer','esri/urlUtils','esri/tasks/query','esri/arcgis/Portal','esri/arcgis/OAuthInfo',
-		'esri/IdentityManager',"esri/arcgis/utils","dijit/layout/BorderContainer", "dijit/layout/ContentPane",
-		"dijit/TitlePane",'dojo/Deferred','dojo/domReady!'
-	], function (Map, BasemapGallery, BasemapLayer, PictureMarkerSymbol, FeatureLayer, urlUtils, Query, arcgisPortal, OAuthInfo, esriId, $, Deferred) {
+			var url, info, query, map, featureLayer, feature;
 
-		var url, info, query, map, featureLayer, feature;
+			info = new OAuthInfo({
+				appId: conf.clienteId
+			});
 
-		info = new OAuthInfo({
-			appId: conf.clienteId
+			esriId.registerOAuthInfos([info]);
+			esriId.checkSignInStatus(info.portalUrl + '/sharing').then(function () {
+				new arcgisPortal.Portal(info.portalUrl).signIn().then(function (portalUser) {
+					/*console.log(portalUser);
+					portalUser.getGroups().then(function (groups) {
+						console.log(groups);
+						url = urlUtils.urlToObject(window.location.href);
+
+						groups.forEach(function (group) {
+
+						});
+					}, function (err) {
+						console.log(err);
+					});*/
+				}, function (err) {
+					console.log(err);
+				});
+			}, function (err) {
+				console.log(err);
+			});
+
+			esriId.getCredential(info.portalUrl + '/sharing');
+
 		});
-
-		esriId.registerOAuthInfos([info]);
-		esriId.checkSignInStatus(info.portalUrl + '/sharing').then(function(){
-			new arcgisPortal.Portal(info.portalUrl).signIn().then(function (portalUser){
-				console.log(portalUser);
-				portalUser.getGroups().then(function(groups){
-					console.log(groups);
-					url = urlUtils.urlToObject(window.location.href);
-
-					groups.forEach(function(group){
-
-					});
-				}, function(err){console.log(err);});
-			}, function(err){console.log(err);});
-		}, function(err){console.log(err);});
-
-		esriId.getCredential(info.portalUrl + '/sharing');
-
-	});
+	}
 
 
 </script>
