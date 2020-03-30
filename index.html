@@ -37,6 +37,9 @@
 		<div class="alert alert-warning" style="display: none;" id="alertEdit">
 			Map Id y Object Id son obligatorios.
 		</div>
+		<div class="alert alert-warning" style="display: none;" id="alertEditToken">
+			Error: <label></label>
+		</div>
 		<button type="button" id="btnEdit" class="btn btn-primary btn-lg btn-block">Editar</button>
 	</div>
 	<div>
@@ -70,7 +73,8 @@
 		instance:'lTrEzFGSU2ayogtj',
 		serviceName:'Test_Feature_Layer',
 		layerId:'0',
-		clienteId:'IxHuZnJXVrOYXgQT'
+		clienteId:'IxHuZnJXVrOYXgQT',
+		objectId:''
 	};
 	// https://{{subdomain}}.arcgis.com/{{instance}}/arcgis/rest/services/{{serviceName}}/FeatureServer/{{layerId}}
 	//?instance=lTrEzFGSU2ayogtj
@@ -80,10 +84,16 @@
 	function FeatureLoad(){
 		filter.objectId = $("#filterObjetId").val();
 		if(conf.instance!= '' && filter.objectId != '') {
-			var url = String.format(conf.url+'query?f=json&returnGeometry=false&outFields=*&where=((objectid = {0}))',filter.objectId);
+			var url = String.format(conf.url+'query?f=json&returnGeometry=false&outFields=*&where=((objectid = {0}))&token={1}',filter.objectId,conf.token);
 
 			$.get(url, function (data) {
-				FeatureFormat(JSON.parse(data));
+				data = JSON.parse(data);
+				if(data.error){
+					$("#alertEditToken > label").html(data.error.message);
+					AlertShow('#alertEditToken');
+				}else {
+					FeatureFormat(data);
+				}
 			});
 		}
 		else{
@@ -173,7 +183,7 @@
 		}
 		if(hasChanges) {
 			dataToUpdate.objectid = filter.objectId;
-			var url = String.format(conf.url+'applyEdits', filter.mapId)+"?f=json&updates=" + encodeURIComponent( JSON.stringify([{"attributes": dataToUpdate}]));
+			var url = String.format(conf.url+'applyEdits', filter.mapId)+"?f=json&updates=" + encodeURIComponent( JSON.stringify([{"attributes": dataToUpdate}]))+'&token='+conf.token;
 			$.post(url,{}, function (data) {
 				data = JSON.parse(data);
 				if(data.error){
@@ -213,18 +223,17 @@
 			console.log(query_string);
 			return query_string;
 		} ();
-		if(qs.subdomain)
-			conf.subdomain = qs.subdomain;
-		if(qs.instance)
-			conf.instance = qs.instance;
-		if(qs.serviceName)
-			conf.serviceName = qs.serviceName;
-		if(qs.layerId)
-			conf.layerId = qs.layerId;
-		if(qs.clienteId)
-			conf.clienteId = qs.clienteId;
-		else
-			conf.clienteId = '';
+		if(qs.subdomain)conf.subdomain = qs.subdomain;
+		if(qs.instance)conf.instance = qs.instance;
+		if(qs.serviceName)conf.serviceName = qs.serviceName;
+		if(qs.layerId)conf.layerId = qs.layerId;
+		if(qs.token)conf.token = qs.token;
+
+		conf.clienteId=qs.clienteId?qs.clienteId:'';
+		if(qs.objectId) {
+			conf.objectId = qs.objectId;
+			$("#filterObjetId").val(conf.objectId);
+		}
 		conf.url = String.format(conf.urlBase,conf.subdomain,conf.instance,conf.serviceName,conf.layerId);
 		// https://{{subdomain}}.arcgis.com/{{instance}}/arcgis/rest/services/{{serviceName}}/FeatureServer/{{layerId}}
 	}
