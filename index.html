@@ -73,7 +73,7 @@
 		instance:'lTrEzFGSU2ayogtj',
 		serviceName:'Test_Feature_Layer',
 		layerId:'0',
-		clienteId:'IxHuZnJXVrOYXgQT',
+		appId:'IxHuZnJXVrOYXgQT',
 		objectId:''
 	};
 	// https://{{subdomain}}.arcgis.com/{{instance}}/arcgis/rest/services/{{serviceName}}/FeatureServer/{{layerId}}
@@ -229,7 +229,7 @@
 		if(qs.layerId)conf.layerId = qs.layerId;
 		if(qs.token)conf.token = qs.token;
 
-		conf.clienteId=qs.clienteId?qs.clienteId:'';
+		conf.appId=qs.appId?qs.appId:'';
 		if(qs.objectId) {
 			conf.objectId = qs.objectId;
 			$("#filterObjetId").val(conf.objectId);
@@ -243,18 +243,16 @@
 
 	Start();
 
-	if(conf.clienteId != '') {
-		require([
-			'esri/map', "esri/dijit/BasemapGallery", "esri/dijit/BasemapLayer", "esri/symbols/PictureMarkerSymbol",
-			'esri/layers/FeatureLayer', 'esri/urlUtils', 'esri/tasks/query', 'esri/arcgis/Portal', 'esri/arcgis/OAuthInfo',
-			'esri/IdentityManager', "esri/arcgis/utils", "dijit/layout/BorderContainer", "dijit/layout/ContentPane",
-			"dijit/TitlePane", 'dojo/Deferred', 'dojo/domReady!'
-		], function (Map, BasemapGallery, BasemapLayer, PictureMarkerSymbol, FeatureLayer, urlUtils, Query, arcgisPortal, OAuthInfo, esriId, $, Deferred) {
+	if(conf.appId != '') {
+		require(['esri/map', "esri/dijit/BasemapGallery", "esri/dijit/BasemapLayer", "esri/symbols/PictureMarkerSymbol",
+				'esri/layers/FeatureLayer', 'esri/urlUtils', 'esri/tasks/query', 'esri/arcgis/Portal', 'esri/arcgis/OAuthInfo',
+				'esri/IdentityManager', 'dojo/Deferred', 'dojo/domReady!'
+			], function (Map, BasemapGallery, BasemapLayer, PictureMarkerSymbol, FeatureLayer, urlUtils, Query, arcgisPortal, OAuthInfo, esriId, $, Deferred) {
 
 			var url, info, query, map, featureLayer, feature;
 
 			info = new OAuthInfo({
-				appId: conf.clienteId
+				appId: conf.appId
 			});
 
 			esriId.registerOAuthInfos([info]);
