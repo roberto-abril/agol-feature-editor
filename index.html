@@ -11,13 +11,7 @@
 		<script src="https://js.arcgis.com/3.16/init.js"></script>
 		<style>
 			.container-top{max-width: 500px;}
-			.bk {
-				position: relative;
-				padding: 2rem;
-				margin: 5px;
-				border: solid #f8f9fa;
-				border-radius: 10px;
-			}
+			.bk {position: relative;padding: 2rem;margin: 5px;border: solid #f8f9fa;border-radius: 10px;			}
 		</style>
 	</head>
 	<body>
@@ -33,7 +27,6 @@
 			<input type="text" class="form-control" id="filterObjetId">
 			</div>
 		</div>
-
 		<div class="alert alert-warning" style="display: none;" id="alertEdit">
 			Map Id y Object Id son obligatorios.
 		</div>
@@ -47,7 +40,6 @@
 	</div>
 	<div class="bk">
 		<div id="form">
-
 		</div>
 		<div class="alert alert-warning" style="display: none;" id="alertSaveEmpty">
 			No se han detectado cambios.
@@ -61,8 +53,6 @@
 		<button type="button" id="btnSave" class="btn btn-primary btn-lg btn-block">Guardar</button>
 	</div>
 </div>
-
-
 <script>
 	String.format = function() {var s = arguments[0];for (var i = 0; i < arguments.length - 1; i++) {var reg = new RegExp("\\{" + i + "\\}", "gm");s = s.replace(reg, arguments[i + 1]);}return s;}
 
@@ -139,11 +129,10 @@
 					}
 					break;
 			}
-
 		}
 	}
 	function FeatureFormatText(data,value) {
-		var input = $('<input type="text" class="form-control" id="'+data.name+'" value="" >').val(value);
+		var input = $('<textarea type="text" class="form-control" id="'+data.name+'" value="" >').val(value);
 		input.change(function () {
 			currentForm[this.id].value = $(this).val();
 		});
@@ -171,7 +160,6 @@
 				.append($('<div class="col-sm-9"></div>').append(select));
 
 	}
-
 	function FeatureSave(){
 		var hasChanges = false;
 		var dataToUpdate = {};
@@ -195,7 +183,6 @@
 		}else{
 			AlertShow('#alertSaveEmpty');
 		}
-
 	}
 	function Start() {
 		$("#btnEdit").click(FeatureLoad);
